@@ -35,6 +35,12 @@
 #define ZNC17 0
 #endif
 
+#if (VERSION_MAJOR > 1) || (VERSION_MAJOR == 1 && VERSION_MINOR >= 9)
+#define ZNC19 1
+#else
+#define ZNC17 0
+#endif
+
 class CClientBufferCacheJob : public CTimer
 {
 public:
@@ -81,10 +87,14 @@ public:
 
     virtual void OnClientLogin() override;
 
-#if ZNC17
+#if ZNC17 || ZNC19
     virtual EModRet OnUserRawMessage(CMessage& Message) override;
     virtual EModRet OnUserTextMessage(CTextMessage& Message) override;
+#if ZNC17
     virtual EModRet OnSendToClientMessage(CMessage& Message) override;
+#else
+    virtual EModRet OnSentToClientMessage(CMessage& Message) override;
+#endif
 #else
     virtual EModRet OnUserRaw(CString& line) override;
     virtual EModRet OnSendToClient(CString& line, CClient& client) override;
@@ -289,8 +299,14 @@ CModule::EModRet CClientBufferMod::OnUserTextMessage(CTextMessage& Message)
 
 /// ZNC callback (called when ZNC sends a raw traffic line to a client).
 /// Updates the client "last seen" timestamp.
+#if ZNC17 || ZNC19
+CModule::EModRet CClientBufferMod::
 #if ZNC17
-CModule::EModRet CClientBufferMod::OnSendToClientMessage(CMessage& Message)
+OnSendToClientMessage
+#else
+OnSentToClientMessage
+#endif
+(CMessage& Message)
 {
     // make sure not to update the timestamp for a channel when joining it
     if (!WantMessageType(Message.GetType()))
