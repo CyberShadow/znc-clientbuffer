@@ -90,10 +90,10 @@ public:
 #if ZNC17 || ZNC19
     virtual EModRet OnUserRawMessage(CMessage& Message) override;
     virtual EModRet OnUserTextMessage(CTextMessage& Message) override;
-#if ZNC17
-    virtual EModRet OnSendToClientMessage(CMessage& Message) override;
-#else
+#if ZNC19
     virtual EModRet OnSentToClientMessage(CMessage& Message) override;
+#else
+    virtual EModRet OnSendToClientMessage(CMessage& Message) override;
 #endif
 #else
     virtual EModRet OnUserRaw(CString& line) override;
@@ -301,10 +301,10 @@ CModule::EModRet CClientBufferMod::OnUserTextMessage(CTextMessage& Message)
 /// Updates the client "last seen" timestamp.
 #if ZNC17 || ZNC19
 CModule::EModRet CClientBufferMod::
-#if ZNC17
-OnSendToClientMessage
-#else
+#if ZNC19
 OnSentToClientMessage
+#else
+OnSendToClientMessage
 #endif
 (CMessage& Message)
 {
