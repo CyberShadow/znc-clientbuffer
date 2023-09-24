@@ -38,7 +38,7 @@
 #if (VERSION_MAJOR > 1) || (VERSION_MAJOR == 1 && VERSION_MINOR >= 9)
 #define ZNC19 1
 #else
-#define ZNC17 0
+#define ZNC19 0
 #endif
 
 class CClientBufferCacheJob : public CTimer
