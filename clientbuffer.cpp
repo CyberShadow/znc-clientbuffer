@@ -84,10 +84,8 @@ public:
 #if ZNC17
     virtual EModRet OnUserRawMessage(CMessage& Message) override;
     virtual EModRet OnUserTextMessage(CTextMessage& Message) override;
-    virtual EModRet OnSendToClientMessage(CMessage& Message) override;
 #else
     virtual EModRet OnUserRaw(CString& line) override;
-    virtual EModRet OnSendToClient(CString& line, CClient& client) override;
 #endif
 
     virtual EModRet OnChanBufferStarting(CChan& chan, CClient& client) override;
@@ -256,8 +254,7 @@ CModule::EModRet CClientBufferMod::OnUserRawMessage(CMessage& Message)
     if (!client)
         return CONTINUE;
 
-    if (WantMessageType(Message.GetType()))
-        UpdateTimestamp(client->GetIdentifier(), GetTarget(Message), Message.GetTime());
+    UpdateTimestamp(client->GetIdentifier(), GetTarget(Message), Message.GetTime());
 
     return CONTINUE;
 }
@@ -267,7 +264,7 @@ CModule::EModRet CClientBufferMod::OnUserRaw(CString& line)
     CClient* client = GetClient();
     if (client) {
         CNick nick; CString cmd, target;
-        if (ParseMessage(line, nick, cmd, target) && WantMessageCmd(cmd))
+        if (ParseMessage(line, nick, cmd, target))
             UpdateTimestamp(client, target);
     }
     return CONTINUE;
@@ -283,38 +280,6 @@ CModule::EModRet CClientBufferMod::OnUserTextMessage(CTextMessage& Message)
     if (client)
         UpdateTimestamp(client->GetIdentifier(), GetTarget(Message), Message.GetTime());
 
-    return CONTINUE;
-}
-#endif
-
-/// ZNC callback (called when ZNC sends a raw traffic line to a client).
-/// Updates the client "last seen" timestamp.
-#if ZNC17
-CModule::EModRet CClientBufferMod::OnSendToClientMessage(CMessage& Message)
-{
-    // make sure not to update the timestamp for a channel when joining it
-    if (!WantMessageType(Message.GetType()))
-        return CONTINUE;
-
-    // make sure not to update the timestamp for a channel when attaching it
-    CChan* chan = Message.GetChan();
-    if (!chan || !chan->IsDetached())
-        UpdateTimestamp(Message.GetClient()->GetIdentifier(), GetTarget(Message), Message.GetTime());
-    return CONTINUE;
-}
-#else
-CModule::EModRet CClientBufferMod::OnSendToClient(CString& line, CClient& client)
-{
-    CIRCNetwork* network = GetNetwork();
-    if (network) {
-        CNick nick; CString cmd, target;
-        // make sure not to update the timestamp for a channel when attaching it
-        if (ParseMessage(line, nick, cmd, target)) {
-            CChan* chan = network->FindChan(target);
-            if (!chan || !chan->IsDetached())
-                UpdateTimestamp(&client, target);
-        }
-    }
     return CONTINUE;
 }
 #endif
